@@ -2,10 +2,9 @@
 * we gonna need a direct path.
 ./my_shell
 
-* quit or exit
+* quit or exit                         ->(check)
 
-* shell has to be able to use cd & pwd
-
+* shell has to be able to use cd & pwd ->(check)
 
 * Implement the setting, deleting (unsetting)
 
