@@ -156,6 +156,41 @@ Command *read_command()
             add_character_to_string(current_term, ch);
         }
 
+        // ------------------------ongoing implementation-------------------------
+
+        if (strcmp(current_term, "<") == 0)
+        {
+            ch = fgetc(stdin);
+            if (ch == ' ') ungetc(ch, stdin);
+            scanf("%s", current_term);
+            command->input_file = strdup(current_term);
+            current_term[0] = '\0';
+            continue;
+        }
+
+        if (strcmp(current_term, ">") == 0)
+        {
+            ch = fgetc(stdin);
+            if (ch == ' ') ungetc(ch, stdin);
+            scanf("%s", current_term);
+            command->output_file = strdup(current_term);
+            command->append = false;
+            current_term[0] = '\0';
+            continue;
+        }
+        else if (strcmp(current_term, ">>") == 0)
+        {
+            ch = fgetc(stdin);
+            if (ch == ' ') ungetc(ch, stdin);
+            scanf("%s", current_term);
+            command->output_file = strdup(current_term);
+            command->append = true;
+            current_term[0] = '\0';
+            continue;
+        }        
+
+        // ------------------------end of implementation--------------------------
+
         command->raw_command[number_of_raw_characters_read] = ch; // add the character to the raw_command
         number_of_raw_characters_read++;
         command->raw_command[number_of_raw_characters_read] = '\0'; // add the null terminator
@@ -173,9 +208,7 @@ Command *read_command()
     return command;
 }
 
-// TODO: implement handle_internal_command
-
-void execute_command(Command *command)
+void handle_internal_command(Command *command)
 {
     if (strcmp(command->terms[0], "exit") == 0)
     {
@@ -197,7 +230,17 @@ void execute_command(Command *command)
         return;
     }
 
-    if (strcmp(command->terms[0], "cd") == 0)
+    if (strcmp(command->terms[0], "echo") == 0)
+    {
+        for (int ix = 1; command->terms[ix] != NULL; ix++)
+        {
+            printf("%s ", command->terms[ix]);
+        }
+        printf("\n");
+        return;
+    }
+
+    if (strcmp(command->terms[0], "cd") == 0) // if the command is cd
     {
         if (chdir(command->terms[1]) == -1)
         {
@@ -205,17 +248,13 @@ void execute_command(Command *command)
         }
         return;
     }
+}
 
-    // hard coded values for testing
-    command->input_file = strdup("input.txt");
-
-    // for it not to be hard coded, it should be like this:
-    // command->input_file = strdup("input.txt");
-
-    command->output_file = strdup("output.txt");
+void execute_command(Command *command)
+{
+    handle_internal_command(command);
 
     char *executable_path = NULL;
-    // printf("\nexecuting command raw_command '%s'\n", command->raw_command);
 
     if (command->terms[0][0] == '/' || command->terms[0][0] == '.')
     {
@@ -224,7 +263,7 @@ void execute_command(Command *command)
     }
     else
     {
-        executable_path = find_absolute_path(command->terms[0]); 
+        executable_path = find_absolute_path(command->terms[0]);
     }
 
     if (!CAN_EXECUTE(executable_path))
@@ -233,7 +272,9 @@ void execute_command(Command *command)
         return;
     }
 
-    printf("executing command: %s\n", command->terms[0]);
+    // TODO: implement input/output redirection. bug in the code with uncommented lines below
+    // command->input_file = strdup("input.txt");
+    // command->output_file = strdup("output.txt");
 
     if (command->input_file != NULL)
     {
@@ -304,9 +345,9 @@ void free_command(Command *command)
     }
     if (command->terms != NULL)
     {
-        for (int i = 0; command->terms[i] != NULL; i++)
+        for (int ix = 0; command->terms[ix] != NULL; ix++)
         {
-            free(command->terms[i]);
+            free(command->terms[ix]);
         }
         free(command->terms);
     }
